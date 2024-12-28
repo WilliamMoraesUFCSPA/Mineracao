@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import re
 
+print("Carregando a base\n")
+
 # Carrega a base de dados
 df = pd.read_csv(
     "VigiMed_Notificacoes.csv",
@@ -79,11 +81,13 @@ print("")
 #------------------------------------------------------------------------------------------------------------------------------#
 
 # Teste limitador
-df = df[df["IDENTIFICACAO_NOTIFICACAO"] == "BR-ANVISA-300094478"]
+#df = df[df["IDENTIFICACAO_NOTIFICACAO"] == "BR-ANVISA-300094478"]
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIAÇÃO DO ATRIBUTO ORIGEM_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
+
+print("Criando o atributo ORIGEM_NOTIFICACAO\n")
 
 # Ajustar a coluna "recebido_de" para tratar o caso do prefixo "Outro ..."
 df["RECEBIDO_DE_AJUSTADO"] = df["RECEBIDO_DE"].apply(
@@ -119,6 +123,8 @@ print("\nCriado o atributo ORIGEM_NOTIFICACAO\n")
 ###             CRIAÇÃO DO ATRIBUTO ANO_MES_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
+print("Criando o atributo ANO_MES_NOTIFICACAO\n")
+
 # Criar a coluna ANO_MES_NOTIFICACAO
 def calcular_ano_mes_notificacao(row):
     data_notificacao = row["DATA_NOTIFICACAO"]
@@ -143,6 +149,8 @@ print("\nCriado o atributo ANO_MES_NOTIFICACAO\n")
 ###             AGRUPAMENTO DO ATRIBUTO TIPO_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
+print("Agrupando o atributo TIPO_NOTIFICACAO\n")
+
 # Criar/Atualizar a coluna TIPO_NOTIFICACAO
 df["TIPO_NOTIFICACAO"] = df["TIPO_NOTIFICACAO"].apply(
     lambda x: x if isinstance(x, str) and x.startswith("Not") else "Outro"
@@ -153,6 +161,8 @@ print("\nAgrupado o atributo TIPO_NOTIFICACAO\n")
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIAÇÃO DO ATRIBUTO GRUPO_ETARIO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
+
+print("Criando o atributo GRUPO_ETARIO\n")
 
 # Regex para extrair número e unidade de tempo
 number_pattern = r"(\d+)"
@@ -245,6 +255,8 @@ print("\nCriado o atributo GRUPO_ETARIO\n")
 ###             AGRUPAMENTO DO ATRIBUTO SEXO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
+print("Agrupando o atributo SEXO\n")
+
 # Substituindo valores nulos ou "None" por "Desconhecido" na coluna "sexo"
 df['SEXO'] = df['SEXO'].fillna('Desconhecido').replace('None', 'Desconhecido')
 
@@ -253,6 +265,8 @@ print("\nAgrupado o atributo SEXO\n")
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             EXPLOSÃO DOS ATRIBUTOS CONCATENADOS         ###
 #------------------------------------------------------------------------------------------------------------------------------#
+
+print("Iniciando a explosão dos atributos:\n")
 
 # Configurações iniciais
 colunas_para_explodir = [
@@ -277,8 +291,6 @@ delimitador_gravidade = ","  # Delimitador adicional para GRAVIDADE
 
 # Criar um DataFrame vazio para armazenar os dados processados
 df_expandido = pd.DataFrame()
-
-print("\nIniciando processamento das linhas para explosão:\n")
 
 # Processar linha por linha
 for index, row in df.iterrows():
@@ -346,12 +358,18 @@ df_expandido["GRAVIDADE"] = df_expandido.apply(
     axis=1
 )
 
+print("\nExplosão concluída\n")
+
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             AGRUPA VALORES "None", "" E None PARA NaN         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
+print("\nAgrupando valores nulos e vazios\n")
+
 # Substitui "None", strings vazias e None por NaN em todas as colunas
 df_expandido = df_expandido.replace(["", "None", None], np.nan)
+
+print("\nAgrupamento concluído\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIA O DATAFRAME FINAL SOMENTE COM AS COLUNAS QUE SERÃO UTILIZADAS         ###
