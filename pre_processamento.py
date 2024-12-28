@@ -7,10 +7,7 @@ import pytz
 # Definir o fuso horário brasileiro
 fuso_brasil = pytz.timezone('America/Sao_Paulo')
 
-# Obter a data e hora atual no fuso horário brasileiro
-data_hora_atual = datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')
-
-print(f"{data_hora_atual} - Carregando a base\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Carregando a base\n")
 
 # Carrega a base de dados
 df = pd.read_csv(
@@ -22,7 +19,7 @@ df = pd.read_csv(
 )
 
 # Mostra o DataFrame original
-print(f"{data_hora_atual} - DF original carregado:")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - DF original carregado:")
 print(df)
 print("")
 
@@ -95,7 +92,7 @@ df = df[df["IDENTIFICACAO_NOTIFICACAO"] == "BR-ANVISA-300094478"]
 ###             CRIAÇÃO DO ATRIBUTO ORIGEM_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Criando o atributo ORIGEM_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criando o atributo ORIGEM_NOTIFICACAO\n")
 
 # Ajustar a coluna "recebido_de" para tratar o caso do prefixo "Outro ..."
 df["RECEBIDO_DE_AJUSTADO"] = df["RECEBIDO_DE"].apply(
@@ -125,13 +122,13 @@ df["ORIGEM_NOTIFICACAO"] = df.apply(origem_notificacao, axis=1)
 # Remover a coluna intermediária "recebido_de_ajustado" se não for mais necessária
 df.drop(columns=["RECEBIDO_DE_AJUSTADO"], inplace=True)
 
-print(f"{data_hora_atual} - Criado o atributo ORIGEM_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criado o atributo ORIGEM_NOTIFICACAO\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIAÇÃO DO ATRIBUTO ANO_MES_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Criando o atributo ANO_MES_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criando o atributo ANO_MES_NOTIFICACAO\n")
 
 # Criar a coluna ANO_MES_NOTIFICACAO
 def calcular_ano_mes_notificacao(row):
@@ -151,26 +148,26 @@ def calcular_ano_mes_notificacao(row):
 # Aplicar a função para criar a nova coluna
 df["ANO_MES_NOTIFICACAO"] = df.apply(calcular_ano_mes_notificacao, axis=1)
 
-print(f"{data_hora_atual} - Criado o atributo ANO_MES_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criado o atributo ANO_MES_NOTIFICACAO\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             AGRUPAMENTO DO ATRIBUTO TIPO_NOTIFICACAO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Agrupando o atributo TIPO_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupando o atributo TIPO_NOTIFICACAO\n")
 
 # Criar/Atualizar a coluna TIPO_NOTIFICACAO
 df["TIPO_NOTIFICACAO"] = df["TIPO_NOTIFICACAO"].apply(
     lambda x: x if isinstance(x, str) and x.startswith("Not") else "Outro"
 )
 
-print(f"{data_hora_atual} - Agrupado o atributo TIPO_NOTIFICACAO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupado o atributo TIPO_NOTIFICACAO\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIAÇÃO DO ATRIBUTO GRUPO_ETARIO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Criando o atributo GRUPO_ETARIO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criando o atributo GRUPO_ETARIO\n")
 
 # Regex para extrair número e unidade de tempo
 number_pattern = r"(\d+)"
@@ -257,24 +254,24 @@ df["GRUPO_ETARIO"] = df.apply(ajusta_grupo_etario, axis=1)
 # Remover colunas temporárias
 df.drop(columns=["valor", "periodo", "ano_notificacao", "idade_em_dias"], inplace=True)
 
-print(f"{data_hora_atual} - Criado o atributo GRUPO_ETARIO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Criado o atributo GRUPO_ETARIO\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             AGRUPAMENTO DO ATRIBUTO SEXO         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Agrupando o atributo SEXO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupando o atributo SEXO\n")
 
 # Substituindo valores nulos ou "None" por "Desconhecido" na coluna "sexo"
 df['SEXO'] = df['SEXO'].fillna('Desconhecido').replace('None', 'Desconhecido')
 
-print(f"{data_hora_atual} - Agrupado o atributo SEXO\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupado o atributo SEXO\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             EXPLOSÃO DOS ATRIBUTOS CONCATENADOS         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Iniciando a explosão dos atributos:\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Iniciando a explosão dos atributos:\n")
 
 # Configurações iniciais
 colunas_para_explodir = [
@@ -366,18 +363,18 @@ df_expandido["GRAVIDADE"] = df_expandido.apply(
     axis=1
 )
 
-print(f"{data_hora_atual} - Explosão concluída\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Explosão concluída\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             AGRUPA VALORES "None", "" E None PARA NaN         ###
 #------------------------------------------------------------------------------------------------------------------------------#
 
-print(f"{data_hora_atual} - Agrupando valores nulos e vazios\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupando valores nulos e vazios\n")
 
 # Substitui "None", strings vazias e None por NaN em todas as colunas
 df_expandido = df_expandido.replace(["", "None", None], np.nan)
 
-print(f"{data_hora_atual} - Agrupamento concluído\n")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupamento concluído\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIA O DATAFRAME FINAL SOMENTE COM AS COLUNAS QUE SERÃO UTILIZADAS         ###
@@ -430,6 +427,6 @@ df_final.to_csv(
     index=False # Não incluir o índice
 )
 
-print(f"{data_hora_atual} - Algoritmo concluído")
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Algoritmo concluído")
 
 
