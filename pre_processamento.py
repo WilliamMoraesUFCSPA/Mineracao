@@ -86,7 +86,7 @@ print("")
 #------------------------------------------------------------------------------------------------------------------------------#
 
 # Teste limitador
-#df = df[df["IDENTIFICACAO_NOTIFICACAO"] == "BR-ANVISA-300094478"]
+df = df[df["IDENTIFICACAO_NOTIFICACAO"] == "BR-ANVISA-300000359"]
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIAÇÃO DO ATRIBUTO ORIGEM_NOTIFICACAO         ###
@@ -291,6 +291,12 @@ colunas_para_copiar = [
     "DESFECHO"
 ]
 
+colunas_especificas = [
+    "RELACAO_MEDICAMENTO_EVENTO",
+    "NOME_MEDICAMENTO_WHODRUG",
+    "ACAO_ADOTADA"
+]
+
 delimitador = "|"  # Delimitador principal
 delimitador_gravidade = ","  # Delimitador adicional para GRAVIDADE
 
@@ -299,16 +305,19 @@ df_expandido = pd.DataFrame()
 
 # Processar linha por linha
 for index, row in df.iterrows():
-    # Delimitador para teste
     # if index == 1000:
     #     break
     print(f"Processando linha: {index}")
 
     # Explodir colunas selecionadas pelo delimitador principal
     valores_explodidos = {
-        coluna: str(row[coluna]).replace("_x000D_", "").split(delimitador) if pd.notna(row[coluna]) else [None]
+        coluna: [
+            valor if valor.strip() != "" else None  # Transformar string vazia em None
+            for valor in str(row[coluna]).replace("_x000D_", "").split(delimitador)
+        ] if pd.notna(row[coluna]) else [None]
         for coluna in colunas_para_explodir
     }
+
 
     # Determinar o número máximo de valores entre as colunas explodidas
     max_linhas = max(len(valores) for valores in valores_explodidos.values())
@@ -345,16 +354,32 @@ for id_notificacao in df_expandido["IDENTIFICACAO_NOTIFICACAO"].unique():
     df_id = df_expandido[df_expandido["IDENTIFICACAO_NOTIFICACAO"] == id_notificacao]
     ultima_linha_valida = None
 
+    # Tratar as colunas para copiar os valores das últimas linhas válidas
     for index, row in df_id.iterrows():
-        # Verificar se as colunas explodidas são nulas ou None
         if all(pd.isna(row[coluna]) or row[coluna] is None for coluna in colunas_para_copiar):
-            # Substituir os valores das colunas explodidas pela última linha válida
             if ultima_linha_valida is not None:
                 for coluna in colunas_para_copiar:
                     df_expandido.loc[row.name, coluna] = ultima_linha_valida[coluna]
         else:
-            # Atualizar a última linha válida
             ultima_linha_valida = row
+            
+    # Verificar as colunas RELACAO_MEDICAMENTO_EVENTO, NOME_MEDICAMENTO_WHODRUG e ACAO_ADOTADA
+    for coluna in colunas_especificas:
+        # Obter os valores únicos não nulos da coluna
+        valores_unicos = df_id[coluna].dropna().unique()
+        
+        if len(valores_unicos) == 1:  # Apenas uma informação não nula
+            valor_unico = valores_unicos[0]
+            # Preencher as linhas nulas dessa coluna com o valor único
+            df_expandido.loc[df_expandido["IDENTIFICACAO_NOTIFICACAO"] == id_notificacao, coluna] = df_expandido.loc[
+                df_expandido["IDENTIFICACAO_NOTIFICACAO"] == id_notificacao, coluna
+            ].fillna(valor_unico)
+        else:
+            # Preencher as linhas nulas dessa coluna com "Desconhecido"
+            df_expandido.loc[df_expandido["IDENTIFICACAO_NOTIFICACAO"] == id_notificacao, coluna] = df_expandido.loc[
+                df_expandido["IDENTIFICACAO_NOTIFICACAO"] == id_notificacao, coluna
+            ].fillna("Desconhecido")
+    
 
 # Se GRAVIDADE estiver nulo e em "GRAVE" estiver como 'Não', então preenche com 'Sem gravidade'
 df_expandido["GRAVIDADE"] = df_expandido.apply(
@@ -372,9 +397,20 @@ print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Explosão co
 print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupando valores nulos e vazios\n")
 
 # Substitui "None", strings vazias e None por NaN em todas as colunas
-df_expandido = df_expandido.replace(["", "None", None], np.nan)
+df_expandido = df_expandido.replace(["", "None"], np.nan)
 
 print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Agrupamento concluído\n")
+
+#------------------------------------------------------------------------------------------------------------------------------#
+###             PREENCHE VALORES NULOS COM "Desconhecido"         ###
+#------------------------------------------------------------------------------------------------------------------------------#
+
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Preenchendo valores nulos e vazios\n")
+
+# Preencher valores nulos nos atributos "DESFECHO" e "ACAO_ADOTADA" com "Desconhecido"
+df_expandido[["GRAVE", "GRAVIDADE", "DESFECHO", "ACAO_ADOTADA"]] = df_expandido[["GRAVE", "GRAVIDADE", "DESFECHO", "ACAO_ADOTADA"]].fillna("Desconhecido")
+
+print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Preenchimento concluído\n")
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             CRIA O DATAFRAME FINAL SOMENTE COM AS COLUNAS QUE SERÃO UTILIZADAS         ###
@@ -404,7 +440,8 @@ df_final = df_expandido[colunas_selecionadas]
 #------------------------------------------------------------------------------------------------------------------------------#
 
 # Remove espaços em branco antes e depois dos valores no DataFrame expandido
-df_final = df_final.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+#df_final = df_final.dropna().map(lambda x: x.strip() if isinstance(x, str) else x)
+df_final = df_final.map(lambda x: x.strip() if isinstance(x, str) else x)
 
 #------------------------------------------------------------------------------------------------------------------------------#
 ###             MOSTRA A QUANTIDADE DE INSTÂNCIAS EM CADA VALOR DAS COLUNAS         ###
@@ -421,10 +458,10 @@ for column in df_final.columns:
 #------------------------------------------------------------------------------------------------------------------------------#
 
 df_final.to_csv(
-    f"notificacoes_clean.csv",
-    encoding="ISO-8859-1", # para manter as acentuações
-    sep=";", # separador
-    index=False # Não incluir o índice
+   f"notificacoes_clean.csv",
+   encoding="ISO-8859-1", # para manter as acentuações
+   sep=";", # separador
+   index=False # Não incluir o índice
 )
 
 print(f"{datetime.now(fuso_brasil).strftime('%Y-%m-%d %H:%M:%S')} - Algoritmo concluído")
